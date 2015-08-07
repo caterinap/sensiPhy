@@ -1,10 +1,117 @@
 <!DOCTYPE html>
-<html>
+<html lang="en-us">
   <head>
-    <script src="documentup.min.js"></script>
-    <script>
-      DocumentUp.document("paternogbc/sensiPhy");
-    </script>
+    <meta charset="UTF-8">
+    <title>Sensic by paternogbc</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
   </head>
-  <body></body>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Sensic</h1>
+      <h2 class="project-tagline">R package to perform sensitive analysis for comparative methods</h2>
+      <a href="https://github.com/paternogbc/sensiPhy" class="btn">View on GitHub</a>
+      <a href="https://github.com/paternogbc/sensiPhy/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/paternogbc/sensiPhy/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <p><a href="https://travis-ci.org/paternogbc/sensiPhy"><img src="https://travis-ci.org/paternogbc/sensiPhy.svg?branch=master" alt="Travis-CI Build Status"></a>
+<a href="http://badge.fury.io/gh/paternogbc%2FsensiPhy"><img src="https://badge.fury.io/gh/paternogbc%2FsensiPhy.svg" alt="GitHub version"></a></p>
+
+<h1>
+<a id="sensiphy" class="anchor" href="#sensiphy" aria-hidden="true"><span class="octicon octicon-link"></span></a>sensiPhy</h1>
+
+<p>R package to perform sensitivity analysis for comparative methods</p>
+
+<h4>
+<a id="installing-sensiphy-from-github" class="anchor" href="#installing-sensiphy-from-github" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installing sensiPhy from Github:</h4>
+
+<div class="highlight highlight-r"><pre><span class="pl-c"># First install the package `devtools` (you should skip this if you have `devtools`)</span>
+install.packages(<span class="pl-s"><span class="pl-pds">"</span>devtools<span class="pl-pds">"</span></span>)
+
+<span class="pl-c"># Install `sensiPhy` from github: </span>
+<span class="pl-e">devtools</span><span class="pl-k">::</span>install_github(<span class="pl-s"><span class="pl-pds">"</span>paternogbc/sensiPhy<span class="pl-pds">"</span></span>)
+
+<span class="pl-c"># Loading required packages:</span>
+library(<span class="pl-smi">phylolm</span>);library(<span class="pl-smi">ggplot2</span>);library(<span class="pl-smi">gridExtra</span>)
+library(<span class="pl-smi">sensiPhy</span>)</pre></div>
+
+<p>Simulating data:</p>
+
+<div class="highlight highlight-r"><pre>set.seed(<span class="pl-c1">2468</span>)
+    <span class="pl-smi">tree</span> <span class="pl-k">&lt;-</span> rtree(<span class="pl-c1">100</span>)
+    <span class="pl-smi">pred</span><span class="pl-k">&lt;-</span> rTraitCont(<span class="pl-smi">tree</span>,<span class="pl-v">root.value</span><span class="pl-k">=</span><span class="pl-c1">0</span>,<span class="pl-v">sigma</span><span class="pl-k">=</span><span class="pl-c1">1</span>,<span class="pl-v">model</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>BM<span class="pl-pds">"</span></span>)
+    <span class="pl-smi">cont_trait1</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">pred</span> <span class="pl-k">+</span> rTraitCont(<span class="pl-smi">tree</span>,<span class="pl-v">model</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>BM<span class="pl-pds">"</span></span>,<span class="pl-v">sigma</span><span class="pl-k">=</span><span class="pl-c1">2.5</span>)
+    <span class="pl-smi">bin_trait1</span><span class="pl-k">&lt;-</span>rbinTrait(<span class="pl-v">n</span><span class="pl-k">=</span><span class="pl-c1">1</span>,<span class="pl-smi">tree</span>,<span class="pl-v">beta</span><span class="pl-k">=</span>c(<span class="pl-k">-</span><span class="pl-c1">1</span>,<span class="pl-c1">0.5</span>),<span class="pl-v">alpha</span><span class="pl-k">=</span><span class="pl-c1">3</span>,
+                          <span class="pl-v">X</span><span class="pl-k">=</span>cbind(rep(<span class="pl-c1">1</span>,length(<span class="pl-smi">tree</span><span class="pl-k">$</span><span class="pl-smi">tip.label</span>)),<span class="pl-smi">pred</span>))
+    <span class="pl-smi">dat</span><span class="pl-k">&lt;-</span><span class="pl-k">data.frame</span>(<span class="pl-smi">pred</span>,<span class="pl-smi">cont_trait1</span>,<span class="pl-smi">bin_trait1</span>)</pre></div>
+
+<p>Original Linear regression (PGLS):</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-smi">mod0</span> <span class="pl-k">&lt;-</span> phylolm(<span class="pl-smi">cont_trait1</span> <span class="pl-k">~</span> <span class="pl-smi">pred</span>, <span class="pl-v">data</span><span class="pl-k">=</span><span class="pl-smi">dat</span>,<span class="pl-v">phy</span><span class="pl-k">=</span><span class="pl-smi">tree</span>)
+summary(<span class="pl-smi">mod0</span>)</pre></div>
+
+<h4>
+<a id="sensitivity-analysis-with-sensiphy-package" class="anchor" href="#sensitivity-analysis-with-sensiphy-package" aria-hidden="true"><span class="octicon octicon-link"></span></a>Sensitivity analysis with sensiPhy package:</h4>
+
+<h5>
+<a id="example-estimating-sampling-effort-bias-with-samp_phylolm" class="anchor" href="#example-estimating-sampling-effort-bias-with-samp_phylolm" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example: Estimating sampling effort bias with <code>samp_phylolm</code>
+</h5>
+
+<div class="highlight highlight-r"><pre><span class="pl-c"># Run sensitive analysis:</span>
+<span class="pl-smi">samp</span> <span class="pl-k">&lt;-</span> samp_phylolm(<span class="pl-smi">cont_trait1</span> <span class="pl-k">~</span> <span class="pl-smi">pred</span>,<span class="pl-v">data</span><span class="pl-k">=</span><span class="pl-smi">dat</span>,<span class="pl-v">phy</span><span class="pl-k">=</span><span class="pl-smi">tree</span>)
+
+<span class="pl-c"># To check the results:</span>
+head(<span class="pl-smi">samp</span><span class="pl-k">$</span><span class="pl-smi">samp.model.estimates</span>)
+
+<span class="pl-c"># You can also specify the number of simulation and break intervals:</span>
+<span class="pl-smi">samp2</span> <span class="pl-k">&lt;-</span> samp_phylolm(<span class="pl-smi">cont_trait1</span> <span class="pl-k">~</span> <span class="pl-smi">pred</span>,<span class="pl-v">data</span><span class="pl-k">=</span><span class="pl-smi">dat</span>,<span class="pl-v">phy</span><span class="pl-k">=</span><span class="pl-smi">tree</span>,
+                 <span class="pl-v">times</span><span class="pl-k">=</span> <span class="pl-c1">50</span>, <span class="pl-v">breaks</span><span class="pl-k">=</span>c(<span class="pl-c1">0.1</span>,.<span class="pl-c1">2</span>,.<span class="pl-c1">3</span>,.<span class="pl-c1">4</span>,.<span class="pl-c1">5</span>,.<span class="pl-c1">6</span>,.<span class="pl-c1">7</span>,.<span class="pl-c1">8</span>))</pre></div>
+
+<h5>
+<a id="example-estimating-influential-species-and-parameter-bias-with-influ_phylolm" class="anchor" href="#example-estimating-influential-species-and-parameter-bias-with-influ_phylolm" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example: Estimating influential species and parameter bias with <code>influ_phylolm</code>
+</h5>
+
+<div class="highlight highlight-r"><pre><span class="pl-c"># Run influential analysis:</span>
+<span class="pl-smi">influ</span> <span class="pl-k">&lt;-</span> influ_phylolm(<span class="pl-smi">cont_trait1</span> <span class="pl-k">~</span> <span class="pl-smi">pred</span>,<span class="pl-v">data</span><span class="pl-k">=</span><span class="pl-smi">dat</span>,<span class="pl-v">phy</span><span class="pl-k">=</span><span class="pl-smi">tree</span>)
+<span class="pl-c"># Check the results</span>
+<span class="pl-smi">influ</span>[[<span class="pl-c1">6</span>]]
+<span class="pl-c"># Check the most influential species:</span>
+<span class="pl-smi">influ</span>[[<span class="pl-c1">5</span>]]
+<span class="pl-c"># Check for species that presented errors during simulations:</span>
+<span class="pl-smi">influ</span><span class="pl-k">$</span><span class="pl-smi">errors</span></pre></div>
+
+<h3>
+<a id="visualizing-results-with-sensi_plot" class="anchor" href="#visualizing-results-with-sensi_plot" aria-hidden="true"><span class="octicon octicon-link"></span></a>Visualizing Results with <code>sensi_plot</code>
+</h3>
+
+<div class="highlight highlight-r"><pre>sensi_plot(<span class="pl-smi">samp</span>)
+sensi_plot(<span class="pl-smi">samp2</span>)
+sensi_plot(<span class="pl-smi">influ</span>)
+</pre></div>
+
+<h3>
+<a id="output-samp_phylolm" class="anchor" href="#output-samp_phylolm" aria-hidden="true"><span class="octicon octicon-link"></span></a>Output <code>samp_phylolm</code>:</h3>
+
+<p><img src="http://i.imgur.com/YyKMEbX.jpg" alt="Output samp_phylolm"></p>
+
+<h3>
+<a id="output-influ_phylolm" class="anchor" href="#output-influ_phylolm" aria-hidden="true"><span class="octicon octicon-link"></span></a>Output <code>influ_phylolm</code>:</h3>
+
+<p><img src="http://i.imgur.com/gF6GuEH.jpg" alt="Output samp_gls"></p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/paternogbc/sensiPhy">Sensic</a> is maintained by <a href="https://github.com/paternogbc">paternogbc</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
 </html>
